@@ -14,5 +14,8 @@ if __name__ == "__main__":
             height=512,
             steps=30
         )
+        if path is None:
+            print(f"生成失败（control_type={ctype}），跳过")
+            continue
         print(f"图片已生成: {path}")
     print("\n所有测试完成！")

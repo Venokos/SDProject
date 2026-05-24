@@ -64,21 +64,25 @@ def generate_image(
     }
 
     # 发送请求
-    response = requests.post(url, json=payload)
+    image_base64 = None
+    try:
+        response = requests.post(url, json=payload, timeout=30)
+        response.raise_for_status()
+        result = response.json()
 
-    # 转为python字典
-    result = response.json()
+        # 调试输出
+        print(json.dumps(result, indent=2))
 
-    # 调试输出
-    print(json.dumps(result, indent=2))
+        # 检查是否成功
+        if "images" not in result:
+            print("生成失败：返回结果中缺少图片")
+            return None
 
-    # 检查是否成功
-    if "images" not in result:
-        print("生成失败")
-        exit()
-
-    # 取出图片
-    image_base64 = result["images"][0]
+        # 取出图片
+        image_base64 = result["images"][0]
+    except requests.RequestException as e:
+        print(f"请求失败：{e}")
+        return None
 
     # 保存图片
     # 1.创建子文件夹 pyOutput（如果不存在）
