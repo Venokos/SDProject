@@ -4,6 +4,9 @@ import json
 import os
 import time
 import argparse
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 def generate_image(
         prompt,
@@ -71,17 +74,17 @@ def generate_image(
         result = response.json()
 
         # 调试输出
-        print(json.dumps(result, indent=2))
+        print("API request successful. Checking result...")
 
         # 检查是否成功
         if "images" not in result:
-            print("生成失败：返回结果中缺少图片")
+            print("Generation failed: missing images in result.")
             return None
 
         # 取出图片
         image_base64 = result["images"][0]
     except requests.RequestException as e:
-        print(f"请求失败：{e}")
+        print(f"Request failed: {e}")
         return None
 
     # 保存图片

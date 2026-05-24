@@ -1,10 +1,13 @@
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+
 from generate import generate_image
 
 if __name__ == "__main__":
     prompt = "a product on the table, minimal studio background"
     control_types = ["scribble", "canny"]
     for ctype in control_types:
-        print(f"\n=== 开始生成，control_type = {ctype} ===")
+        print(f"\n=== Generating, control_type = {ctype} ===")
         path = generate_image(
             prompt=prompt,
             scribble_path="./test1.png",
@@ -15,7 +18,7 @@ if __name__ == "__main__":
             steps=30
         )
         if path is None:
-            print(f"生成失败（control_type={ctype}），跳过")
+            print(f"Generation failed (control_type={ctype}), skipping")
             continue
-        print(f"图片已生成: {path}")
-    print("\n所有测试完成！")
+        print(f"Image generated: {path}")
+    print("\nAll tests completed!")
