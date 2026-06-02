@@ -2,7 +2,7 @@
 #
 #   项目名称:    Scribble ControlNet · 商品场景生成器
 #   文件名称:    app.py
-#   版本号:      v1.2.1
+#   版本号:      v2.0.0
 #   创建日期:    2026-04-18
 #   最后修改:    2026-04-20
 #   作者:        
@@ -11,8 +11,7 @@
 #       基于 Gradio Blocks 构建的商品场景图生成工具前端原型。
 #       用户上传商品图、选择场景风格、手绘 Scribble 草稿后,
 #       通过 ControlNet 管线生成高质量的商品场景合成图。
-#       当前版本为桩函数(Stub)模式, 各接口返回占位假数据,
-#       供团队各模块独立开发与联调使用。
+#       已接入 ControlNet 生成管线, 调用 WebUI API 进行真实图像生成。
 #
 #   运行环境:
 #       Python      >= 3.9
@@ -48,6 +47,7 @@
 #       v1.0.0  2026-04-18  初始版本: 界面布局 + 桩函数 + 管线串联
 #       v1.1.0  2026-04-18  修复画笔颜色选择器; 整理重构; 添加深色模式
 #       v1.2.1  2026-04-20  通过 JS 抖动容器彻底修复多显示器 DPI 画板渲染 Bug
+#       v2.0.0  2026-06-02  接入 ControlNet 生成管线, 替换桩函数为真实 API 调用
 #
 # ============================================================
 
@@ -55,6 +55,9 @@
 # ----------------------------------------------------------
 # 标准库导入
 # ----------------------------------------------------------
+import os                       # 文件路径操作
+import sys                      # 模块搜索路径
+import tempfile                 # 临时文件处理
 import time                     # 模拟推理耗时
 
 # ----------------------------------------------------------
@@ -67,6 +70,13 @@ from PIL import (               # 图像处理
     ImageDraw,
     ImageFont,
 )
+
+# ----------------------------------------------------------
+# 项目模块导入
+# ----------------------------------------------------------
+# 将项目根目录添加到 sys.path，以便导入根目录下的 generate 模块
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import generate as sd_generate   # ControlNet 图像生成模块
 
 
 # ============================================================
@@ -86,6 +96,16 @@ def generate_prompt(bg_type, image=None):
 
 def process_scribble(raw_scribble):
     """预处理画板原始涂鸦数据为 ControlNet 标准输入。"""
+    if raw_scribble is not None:
+        # 转换为 RGB 模式（处理 RGBA 透明通道）并缩放到 512x512
+        if raw_scribble.mode == "RGBA":
+            background = Image.new("RGB", raw_scribble.size, (255, 255, 255))
+            background.paste(raw_scribble, mask=raw_scribble.split()[3])
+            scribble = background
+        else:
+            scribble = raw_scribble.convert("RGB")
+        return scribble.resize((512, 512))
+    # 无涂鸦时返回白色占位图
     return Image.new("RGB", (512, 512), color=(255, 255, 255))
 
 
@@ -101,32 +121,38 @@ def generate_image(prompt, scribble, weight, image):
     print(f"  image    : {'有商品图' if image is not None else '无商品图'}")
     print("=" * 50)
 
-    # 模拟推理耗时
-    time.sleep(1)
+    # 将 PIL Image 保存为临时文件，供 generate 模块读取
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        scribble.save(tmp.name)
+        scribble_path = tmp.name
 
-    # --- 生成占位测试图片 ---
-    result = Image.new("RGB", (512, 512), color=(34, 34, 34))
-    draw = ImageDraw.Draw(result)
-
-    # 尝试加载系统字体, 失败则使用默认字体
     try:
-        font_large = ImageFont.truetype("arial.ttf", 36)
-        font_small = ImageFont.truetype("arial.ttf", 18)
-    except (OSError, IOError):
-        font_large = ImageFont.load_default()
-        font_small = font_large
+        # 调用真实的 ControlNet 生成函数
+        output_path = sd_generate.generate_image(
+            prompt=prompt,
+            scribble_path=scribble_path,
+            weight=weight,
+        )
 
-    # 绘制测试信息
-    draw.text((130, 160), "Test Success", fill=(0, 255, 120), font=font_large)
-    draw.text((120, 220), f"Style: {prompt[:40]}...", fill=(180, 180, 180), font=font_small)
-    draw.text((120, 250), f"Weight: {weight}", fill=(180, 180, 180), font=font_small)
-    draw.text((120, 280), f"Has Image: {'Yes' if image else 'No'}", fill=(180, 180, 180), font=font_small)
+        if output_path is None:
+            # 生成失败，返回错误提示图
+            result = Image.new("RGB", (512, 512), color=(200, 50, 50))
+            draw = ImageDraw.Draw(result)
+            try:
+                font = ImageFont.truetype("arial.ttf", 28)
+            except (OSError, IOError):
+                font = ImageFont.load_default()
+            draw.text((100, 240), "Generation Failed!", fill=(255, 255, 255), font=font)
+            return result
 
-    # 绿色边框
-    for i in range(4):
-        draw.rectangle([i, i, 511 - i, 511 - i], outline=(0, 255, 120))
-
-    return result
+        # 读取生成的图片并返回
+        return Image.open(output_path)
+    finally:
+        # 清理临时文件
+        try:
+            os.unlink(scribble_path)
+        except OSError:
+            pass
 
 
 # ============================================================
@@ -440,14 +466,14 @@ with demo:
                     gr.HTML("""
                     <div class="hint-bar">
                         <span class="hint-icon">&#9881;</span>
-                        <span class="hint-text">当前为桩函数模式 · 返回 Test Success 测试图</span>
+                        <span class="hint-text">已接入 ControlNet 生成管线 · 需启动 WebUI API (端口7860)</span>
                     </div>
                     """)
 
     # ----------------------------------------------------------
     # 底部版权信息
     # ----------------------------------------------------------
-    gr.Markdown("Powered by Gradio Blocks - v1.2.1", elem_id="footer-text")
+    gr.Markdown("Powered by Gradio Blocks - v2.0.0", elem_id="footer-text")
 
     # ----------------------------------------------------------
     # 事件绑定
