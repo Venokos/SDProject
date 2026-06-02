@@ -18,6 +18,21 @@ def generate_image(
         height=512,
         steps=30
 ):
+    """基于ControlNet的可控图像生成函数
+
+    Args:
+        prompt: 文本提示词，如 "studio background, product photography"
+        scribble_path: ControlNet引导图路径
+        weight: ControlNet强度，默认1.0（建议范围0.5-1.5）
+        output_dir: 输出目录，默认"pyOutput"
+        control_type: 控制类型，"scribble"或"canny"，默认"scribble"
+        width: 输出图像宽度，默认512
+        height: 输出图像高度，默认512
+        steps: 采样步数，默认30
+
+    Returns:
+        str: 生成图片的路径，失败返回None
+    """
     # 确保输出文件夹存在
     os.makedirs(output_dir, exist_ok=True)
 
@@ -88,6 +103,10 @@ def generate_image(
         return None
 
     # 保存图片
+    if image_base64 is None:
+        print("生成失败：未获取到图片数据")
+        return None
+
     # 1.创建子文件夹 pyOutput（如果不存在）
     os.makedirs(output_dir, exist_ok=True)
 
