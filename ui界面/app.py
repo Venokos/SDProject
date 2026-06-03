@@ -74,24 +74,65 @@ from PIL import (               # 图像处理
 # ----------------------------------------------------------
 # 项目模块导入
 # ----------------------------------------------------------
-# 将项目根目录添加到 sys.path，以便导入根目录下的 generate 模块
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-import generate as sd_generate   # ControlNet 图像生成模块
+# 将项目根目录添加到 sys.path
+PROJECT_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+sys.path.insert(0, PROJECT_ROOT)
+
+# 导入 ControlNet 图像生成模块 (成员A)
+from backend.generate import generate_image as sd_generate_image
+
+# 导入 Prompt 生成模块 (成员C)
+from prompt.prompt_generator import EcommercePromptGenerator
+
+# 导入 Scribble 模板映射 (成员B)
+from scribble.scribble_map import (
+    get_scribble_path,
+    get_scribble_options,
+    parse_scribble_key,
+    SCRIBBLE_DISPLAY_NAMES,
+)
 
 
 # ============================================================
 #
-#   模块一: 团队协作接口定义 (Stub Functions)
+#   模块一: 团队协作接口定义
 #
 # ============================================================
+
+# 初始化 Prompt 生成器 (成员C模块)
+_prompt_generator = EcommercePromptGenerator()
+
+# 场景风格映射 (UI显示名 -> prompt_generator参数)
+BG_TYPE_MAP = {
+    "studio": "简约",
+    "beach": "自然",
+    "nature": "自然",
+    "luxury": "奢华",
+    "minimal": "简约",
+}
+
 
 def generate_prompt(bg_type, image=None):
-    """根据场景风格与商品图生成文本提示词。"""
-    has_image = "with product image" if image is not None else "without product image"
-    return (
-        f"A professional product photo in {bg_type} style, "
-        f"{has_image}, high quality, 8k resolution"
+    """
+    根据场景风格与商品图生成文本提示词。
+    整合成员C的 Prompt 生成模块。
+    """
+    # 将 UI 的 bg_type 映射到 prompt_generator 的参数
+    prompt_bg_type = BG_TYPE_MAP.get(bg_type, "简约")
+
+    # 使用成员C的 Prompt 生成器
+    prompt = _prompt_generator.generate_prompt(
+        product_type="配饰",  # 默认产品类型，可根据需要扩展
+        background=prompt_bg_type,
+        composition="中心",
+        lighting="自然光",
+        color_scheme="中性",
     )
+
+    # 添加高质量关键词
+    prompt += ", high quality, 8k resolution, professional product photography"
+
+    return prompt
 
 
 def process_scribble(raw_scribble):
@@ -109,8 +150,18 @@ def process_scribble(raw_scribble):
     return Image.new("RGB", (512, 512), color=(255, 255, 255))
 
 
-def generate_image(prompt, scribble, weight, image):
-    """调用 ControlNet 模型生成最终商品场景图。"""
+def generate_image(prompt, scribble, weight, image, scribble_template=None):
+    """
+    调用 ControlNet 模型生成最终商品场景图。
+    整合成员A的图像生成模块与成员B的模板系统。
+
+    参数:
+        prompt: 文本提示词
+        scribble: PIL Image 格式的涂鸦图 (来自画板)
+        weight: ControlNet 权重
+        image: 商品原图 (预留，暂未使用)
+        scribble_template: 预设模板 key (如 "desk", "stand") 或 "custom"
+    """
     # --- 调试日志 ---
     print("=" * 50)
     print("generate_image() 被调用:")
@@ -119,16 +170,32 @@ def generate_image(prompt, scribble, weight, image):
           f"{scribble.size if isinstance(scribble, Image.Image) else 'N/A'}")
     print(f"  weight   : {weight}")
     print(f"  image    : {'有商品图' if image is not None else '无商品图'}")
+    print(f"  template : {scribble_template}")
     print("=" * 50)
 
-    # 将 PIL Image 保存为临时文件，供 generate 模块读取
-    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-        scribble.save(tmp.name)
-        scribble_path = tmp.name
+    # 确定使用的 scribble 路径
+    scribble_path = None
+    cleanup_temp = False
+
+    if scribble_template and scribble_template != "custom":
+        # 使用预设模板 (成员B)
+        scribble_path = get_scribble_path(scribble_template)
+        print(f"  使用预设模板: {scribble_path}")
+    elif scribble is not None:
+        # 使用画板绘制的涂鸦
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            scribble.save(tmp.name)
+            scribble_path = tmp.name
+            cleanup_temp = True
+            print(f"  使用画板涂鸦: {scribble_path}")
+    else:
+        # 无涂鸦，使用默认模板
+        scribble_path = get_scribble_path("desk")
+        print(f"  使用默认模板: {scribble_path}")
 
     try:
-        # 调用真实的 ControlNet 生成函数
-        output_path = sd_generate.generate_image(
+        # 调用成员A的 ControlNet 生成函数
+        output_path = sd_generate_image(
             prompt=prompt,
             scribble_path=scribble_path,
             weight=weight,
@@ -149,10 +216,11 @@ def generate_image(prompt, scribble, weight, image):
         return Image.open(output_path)
     finally:
         # 清理临时文件
-        try:
-            os.unlink(scribble_path)
-        except OSError:
-            pass
+        if cleanup_temp:
+            try:
+                os.unlink(scribble_path)
+            except OSError:
+                pass
 
 
 # ============================================================
@@ -161,13 +229,16 @@ def generate_image(prompt, scribble, weight, image):
 #
 # ============================================================
 
-def main_process(product_image, bg_type, controlnet_weight, raw_scribble):
-    """主管线函数 -- 串联所有接口, 完成端到端的图片生成流程。"""
+def main_process(product_image, bg_type, controlnet_weight, raw_scribble, scribble_template):
+    """
+    主管线函数 -- 串联所有接口, 完成端到端的图片生成流程。
+    整合 A、B、C 三个模块。
+    """
     print("\n" + "=" * 60)
     print("main_process() 启动")
     print("=" * 60)
 
-    print("\nStep 1: generate_prompt()...")
+    print("\nStep 1: generate_prompt() [成员C模块]...")
     prompt = generate_prompt(bg_type=bg_type, image=product_image)
     print(f"  -> prompt = '{prompt}'")
 
@@ -175,12 +246,13 @@ def main_process(product_image, bg_type, controlnet_weight, raw_scribble):
     processed_scribble = process_scribble(raw_scribble=raw_scribble)
     print(f"  -> scribble size = {processed_scribble.size}")
 
-    print("\nStep 3: generate_image()...")
+    print("\nStep 3: generate_image() [成员A模块 + 成员B模板]...")
     result_image = generate_image(
         prompt=prompt,
         scribble=processed_scribble,
         weight=controlnet_weight,
         image=product_image,
+        scribble_template=scribble_template,
     )
     print(f"  -> result size = {result_image.size}")
     print("=" * 60 + "\n")
@@ -188,10 +260,19 @@ def main_process(product_image, bg_type, controlnet_weight, raw_scribble):
     return result_image
 
 
-def extract_and_process(product_image, style_full, controlnet_weight, raw_scribble):
-    """Gradio 按钮回调入口 -- 从 Radio 选项中提取风格标识符, 再调用主管线。"""
+def extract_and_process(product_image, style_full, controlnet_weight, raw_scribble, scribble_template_full):
+    """
+    Gradio 按钮回调入口 -- 从选项中提取标识符, 再调用主管线。
+    """
+    # 提取场景风格
     bg_type = style_full.split("|")[0].strip() if style_full else "studio"
-    return main_process(product_image, bg_type, controlnet_weight, raw_scribble)
+
+    # 提取 scribble 模板 key
+    scribble_template = "custom"  # 默认使用画板
+    if scribble_template_full:
+        scribble_template = parse_scribble_key(scribble_template_full)
+
+    return main_process(product_image, bg_type, controlnet_weight, raw_scribble, scribble_template)
 
 
 # ============================================================
@@ -309,6 +390,15 @@ footer { display: none !important; }
 #style-radio > .label-wrap { margin-bottom: 8px !important; }
 #style-radio > .label-wrap span { font-size: 0.95rem !important; font-weight: 600 !important; color: var(--text-title) !important; }
 
+/* Scribble 模板选择器样式 */
+#scribble-radio, #scribble-radio * { background-color: transparent !important; background: transparent !important; }
+#scribble-radio label { background: var(--radio-bg) !important; border: 1px solid var(--radio-border) !important; border-radius: 10px !important; padding: 8px 10px !important; margin: 0 !important; cursor: pointer !important; transition: background 0.2s ease, border-color 0.2s ease !important; box-sizing: border-box !important; }
+#scribble-radio label:hover { border-color: var(--radio-hover-border) !important; background: var(--radio-hover-bg) !important; }
+#scribble-radio label.selected, #scribble-radio label:has(input:checked) { background: var(--radio-active-bg) !important; border-color: var(--radio-active-border) !important; }
+#scribble-radio input[type="radio"] { display: none !important; }
+#scribble-radio label span { font-size: 0.8rem !important; font-weight: 500 !important; color: var(--radio-label) !important; }
+#scribble-radio .wrap { display: flex !important; flex-direction: column !important; gap: 6px !important; padding: 0 !important; }
+
 /* ==========================================================
    通用组件样式 & 深色覆盖
    ========================================================== */
@@ -414,6 +504,15 @@ with demo:
                         interactive=True,
                     )
 
+                    # Scribble 模板选择 (成员B模块)
+                    scribble_template = gr.Radio(
+                        choices=["自定义画板 | 使用下方画板绘制"] + get_scribble_options(),
+                        value="自定义画板 | 使用下方画板绘制",
+                        label="Scribble 模板",
+                        elem_id="scribble-radio",
+                        interactive=True,
+                    )
+
             # ==================== 中间列 ====================
             with gr.Column(scale=2, min_width=0, elem_id="col-center"):
                 with gr.Column(elem_classes="col-inner"):
@@ -480,7 +579,7 @@ with demo:
     # ----------------------------------------------------------
     generate_btn.click(
         fn=extract_and_process,
-        inputs=[product_image, scene_style, controlnet_strength, scribble_pad],
+        inputs=[product_image, scene_style, controlnet_strength, scribble_pad, scribble_template],
         outputs=[result_image],
     )
 
