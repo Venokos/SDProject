@@ -50,7 +50,8 @@ class EcommercePromptGenerator:
         # Background description options
         self.background_options = {
             "简约": "simple clean background, white or light gray",
-            "自然": "natural environment background, such as wooden table, grass or beach",
+            "自然": "natural environment background, such as wooden table, grass or forest",
+            "海滩": "beach scene with golden sand, ocean waves, blue sky and tropical atmosphere",
             "都市": "modern urban background, such as coffee shop or studio",
             "奢华": "luxurious background, such as gold decorations or high-end fabric",
             "科技感": "tech background, such as geometric patterns or blue light effects",

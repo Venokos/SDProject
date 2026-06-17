@@ -16,7 +16,8 @@ def generate_image(
         control_type="scribble",
         width=512,
         height=512,
-        steps=30
+        steps=30,
+        product_image_path=None,
 ):
     """基于ControlNet的可控图像生成函数
 
@@ -39,6 +40,13 @@ def generate_image(
     # 读取引导图
     with open(scribble_path, "rb") as f:
         control_base64 = base64.b64encode(f.read()).decode()
+
+    # 读取商品图（如果提供）
+    product_base64 = None
+    if product_image_path and os.path.exists(product_image_path):
+        with open(product_image_path, "rb") as f:
+            product_base64 = base64.b64encode(f.read()).decode()
+        print(f"Loaded product image: {product_image_path}")
 
     # 不同控制类型的ControlNet配置
     control_settings = {
@@ -64,22 +72,47 @@ def generate_image(
     # WebUI API地址
     url = "http://127.0.0.1:7860/sdapi/v1/txt2img"
 
-    # 生成参数
-    payload = {
-        "prompt": prompt,
-        "steps": steps,
-        "width": width,
-        "height": height,
-        "sampler_name": "Euler a",
-        "controlnet_units": [
-            {
-                "input_image": control_base64,
-                "module": module_name,
-                "model": model_name,
-                "weight": weight
-            }
-        ]
-    }
+    # 选择 API 端点和生成参数
+    if product_base64:
+        # 使用 img2img 将商品图作为底图，结合 ControlNet
+        url = "http://127.0.0.1:7860/sdapi/v1/img2img"
+        payload = {
+            "prompt": prompt,
+            "steps": steps,
+            "width": width,
+            "height": height,
+            "sampler_name": "Euler a",
+            "init_images": [product_base64],
+            "denoising_strength": 0.75,  # 保留部分商品图特征
+            "controlnet_units": [
+                {
+                    "input_image": control_base64,
+                    "module": module_name,
+                    "model": model_name,
+                    "weight": weight
+                }
+            ]
+        }
+        print("Using img2img mode with product image")
+    else:
+        # 纯 txt2img + ControlNet
+        url = "http://127.0.0.1:7860/sdapi/v1/txt2img"
+        payload = {
+            "prompt": prompt,
+            "steps": steps,
+            "width": width,
+            "height": height,
+            "sampler_name": "Euler a",
+            "controlnet_units": [
+                {
+                    "input_image": control_base64,
+                    "module": module_name,
+                    "model": model_name,
+                    "weight": weight
+                }
+            ]
+        }
+        print("Using txt2img mode (no product image)")
 
     # 发送请求
     image_base64 = None

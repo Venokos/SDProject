@@ -105,7 +105,7 @@ _prompt_generator = EcommercePromptGenerator()
 # 场景风格映射 (UI显示名 -> prompt_generator参数)
 BG_TYPE_MAP = {
     "studio": "简约",
-    "beach": "自然",
+    "beach": "海滩",
     "nature": "自然",
     "luxury": "奢华",
     "minimal": "简约",
@@ -250,17 +250,27 @@ def generate_image(prompt, scribble, weight, image, scribble_template=None):
         scribble_path = get_scribble_path("desk")
         print(f"  使用默认模板: {scribble_path}")
 
+    # 保存商品图到临时文件（如果存在）
+    product_image_path = None
+    if image is not None:
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            image.save(tmp.name)
+            product_image_path = tmp.name
+            print(f"Saved product image to: {product_image_path}")
+
     try:
         # 调用成员A的 ControlNet 生成函数
         print(f"Calling sd_generate_image with:")
         print(f"  prompt: {prompt[:100]}...")
         print(f"  scribble_path: {scribble_path}")
         print(f"  weight: {weight}")
+        print(f"  product_image_path: {product_image_path}")
         
         output_path = sd_generate_image(
             prompt=prompt,
             scribble_path=scribble_path,
             weight=weight,
+            product_image_path=product_image_path,
         )
 
         if output_path is None:
@@ -297,6 +307,11 @@ def generate_image(prompt, scribble, weight, image, scribble_template=None):
         if cleanup_temp:
             try:
                 os.unlink(scribble_path)
+            except OSError:
+                pass
+        if product_image_path:
+            try:
+                os.unlink(product_image_path)
             except OSError:
                 pass
 
