@@ -111,6 +111,15 @@ BG_TYPE_MAP = {
     "minimal": "简约",
 }
 
+# 场景风格对应的详细参数配置
+BG_CONFIG_MAP = {
+    "studio":    {"composition": "中心", "lighting": "棚拍", "color_scheme": "中性"},
+    "beach":     {"composition": "三分法", "lighting": "自然光", "color_scheme": "暖色调"},
+    "nature":    {"composition": "三分法", "lighting": "自然光", "color_scheme": "绿色调"},
+    "luxury":    {"composition": "中心", "lighting": "棚拍", "color_scheme": "奢华"},
+    "minimal":   {"composition": "中心", "lighting": "柔光", "color_scheme": "中性"},
+}
+
 
 def generate_prompt(bg_type, image=None):
     """
@@ -119,14 +128,20 @@ def generate_prompt(bg_type, image=None):
     """
     # 将 UI 的 bg_type 映射到 prompt_generator 的参数
     prompt_bg_type = BG_TYPE_MAP.get(bg_type, "简约")
+    
+    # 获取该场景风格的详细配置
+    bg_config = BG_CONFIG_MAP.get(bg_type, {})
+    composition = bg_config.get("composition", "中心")
+    lighting = bg_config.get("lighting", "自然光")
+    color_scheme = bg_config.get("color_scheme", "中性")
 
     # 使用成员C的 Prompt 生成器
     prompt = _prompt_generator.generate_prompt(
         product_type="配饰",  # 默认产品类型，可根据需要扩展
         background=prompt_bg_type,
-        composition="中心",
-        lighting="自然光",
-        color_scheme="中性",
+        composition=composition,
+        lighting=lighting,
+        color_scheme=color_scheme,
     )
 
     # 添加高质量关键词
@@ -177,12 +192,19 @@ def generate_image(prompt, scribble, weight, image, scribble_template=None):
     scribble_path = None
     cleanup_temp = False
 
-    if scribble_template and scribble_template != "custom":
+    if scribble_template == "custom" and scribble is not None:
+        # 用户选择自定义画板，且画板有内容 -> 使用画板绘制的涂鸦
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            scribble.save(tmp.name)
+            scribble_path = tmp.name
+            cleanup_temp = True
+            print(f"  使用画板涂鸦: {scribble_path}")
+    elif scribble_template and scribble_template != "custom":
         # 使用预设模板 (成员B)
         scribble_path = get_scribble_path(scribble_template)
         print(f"  使用预设模板: {scribble_path}")
     elif scribble is not None:
-        # 使用画板绘制的涂鸦
+        # 无模板选择但画板有内容 -> 使用画板
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
             scribble.save(tmp.name)
             scribble_path = tmp.name

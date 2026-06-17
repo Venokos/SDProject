@@ -55,8 +55,12 @@ def parse_scribble_key(display_name: str) -> str:
         display_name: 显示名称 (如 "桌面 | 商品放在桌面上")
 
     返回:
-        str: 模板键名
+        str: 模板键名，自定义画板返回 "custom"
     """
+    # 处理自定义画板选项
+    if display_name.startswith("自定义") or display_name.startswith("custom"):
+        return "custom"
+    
     for key, name in SCRIBBLE_DISPLAY_NAMES.items():
         if name == display_name or display_name.startswith(key):
             return key
