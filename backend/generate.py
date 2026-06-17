@@ -84,22 +84,46 @@ def generate_image(
     # 发送请求
     image_base64 = None
     try:
-        response = requests.post(url, json=payload, timeout=30)
+        print(f"Sending request to {url}...")
+        print(f"Payload keys: {list(payload.keys())}")
+        print(f"ControlNet units: {len(payload.get('controlnet_units', []))} unit(s)")
+        
+        response = requests.post(url, json=payload, timeout=120)
+        
+        print(f"Response status: {response.status_code}")
+        print(f"Response headers: {dict(response.headers)}")
+        
         response.raise_for_status()
         result = response.json()
 
         # 调试输出
         print("API request successful. Checking result...")
+        print(f"Result keys: {list(result.keys())}")
 
         # 检查是否成功
         if "images" not in result:
             print("Generation failed: missing images in result.")
+            print(f"Full result: {result}")
             return None
 
         # 取出图片
         image_base64 = result["images"][0]
+        print(f"Got image base64 length: {len(image_base64) if image_base64 else 0}")
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP Error: {e}")
+        try:
+            error_body = response.text
+            print(f"Error response body: {error_body[:500]}")
+        except:
+            pass
+        return None
     except requests.RequestException as e:
         print(f"Request failed: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error during API call: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
     # 保存图片

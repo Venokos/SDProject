@@ -217,6 +217,11 @@ def generate_image(prompt, scribble, weight, image, scribble_template=None):
 
     try:
         # 调用成员A的 ControlNet 生成函数
+        print(f"Calling sd_generate_image with:")
+        print(f"  prompt: {prompt[:100]}...")
+        print(f"  scribble_path: {scribble_path}")
+        print(f"  weight: {weight}")
+        
         output_path = sd_generate_image(
             prompt=prompt,
             scribble_path=scribble_path,
@@ -225,17 +230,33 @@ def generate_image(prompt, scribble, weight, image, scribble_template=None):
 
         if output_path is None:
             # 生成失败，返回错误提示图
+            print("ERROR: sd_generate_image returned None")
             result = Image.new("RGB", (512, 512), color=(200, 50, 50))
             draw = ImageDraw.Draw(result)
             try:
                 font = ImageFont.truetype("arial.ttf", 28)
             except (OSError, IOError):
                 font = ImageFont.load_default()
-            draw.text((100, 240), "Generation Failed!", fill=(255, 255, 255), font=font)
+            draw.text((80, 200), "Generation Failed!", fill=(255, 255, 255), font=font)
+            draw.text((40, 260), "Check console for details", fill=(255, 200, 200), font=font)
             return result
 
         # 读取生成的图片并返回
+        print(f"Success! Output at: {output_path}")
         return Image.open(output_path)
+    except Exception as e:
+        print(f"ERROR in generate_image: {e}")
+        import traceback
+        traceback.print_exc()
+        # 返回错误提示图
+        result = Image.new("RGB", (512, 512), color=(200, 50, 50))
+        draw = ImageDraw.Draw(result)
+        try:
+            font = ImageFont.truetype("arial.ttf", 20)
+        except (OSError, IOError):
+            font = ImageFont.load_default()
+        draw.text((40, 200), f"Error: {str(e)[:40]}", fill=(255, 255, 255), font=font)
+        return result
     finally:
         # 清理临时文件
         if cleanup_temp:
