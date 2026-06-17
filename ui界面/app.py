@@ -557,7 +557,6 @@ with demo:
                         type="pil",
                         height=240,
                         sources=["upload"],
-                        alt="上传商品图",
                     )
 
                     scene_style = gr.Radio(
@@ -612,7 +611,6 @@ with demo:
                             default_size=5,
                             color_mode="defaults",
                         ),
-                        alt="Scribble画板",
                     )
 
                     gr.HTML("""
@@ -634,7 +632,6 @@ with demo:
                         height=540,
                         interactive=False,
                         elem_id="result-img",
-                        alt="生成结果预览",
                     )
 
                     generate_btn = gr.Button(
