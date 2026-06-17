@@ -522,6 +522,7 @@ with demo:
                         type="pil",
                         height=240,
                         sources=["upload"],
+                        alt="上传商品图",
                     )
 
                     scene_style = gr.Radio(
@@ -576,6 +577,7 @@ with demo:
                             default_size=5,
                             color_mode="defaults",
                         ),
+                        alt="Scribble画板",
                     )
 
                     gr.HTML("""
@@ -597,6 +599,7 @@ with demo:
                         height=540,
                         interactive=False,
                         elem_id="result-img",
+                        alt="生成结果预览",
                     )
 
                     generate_btn = gr.Button(
@@ -620,8 +623,35 @@ with demo:
     # ----------------------------------------------------------
     # 事件绑定
     # ----------------------------------------------------------
+    def safe_extract_and_process(product_image, scene_style, controlnet_strength, scribble_pad, scribble_template):
+        """包装函数，捕获所有异常并返回错误信息图"""
+        try:
+            print("=" * 60)
+            print("safe_extract_and_process 被调用")
+            print(f"  product_image type: {type(product_image)}")
+            print(f"  scene_style: {scene_style}")
+            print(f"  controlnet_strength: {controlnet_strength}")
+            print(f"  scribble_pad type: {type(scribble_pad)}")
+            print(f"  scribble_template: {scribble_template}")
+            print("=" * 60)
+            return extract_and_process(product_image, scene_style, controlnet_strength, scribble_pad, scribble_template)
+        except Exception as e:
+            print(f"CRITICAL ERROR in safe_extract_and_process: {e}")
+            import traceback
+            traceback.print_exc()
+            # 返回带错误信息的图片
+            result = Image.new("RGB", (512, 512), color=(200, 50, 50))
+            draw = ImageDraw.Draw(result)
+            try:
+                font = ImageFont.truetype("arial.ttf", 20)
+            except (OSError, IOError):
+                font = ImageFont.load_default()
+            draw.text((20, 200), f"Error: {str(e)[:50]}", fill=(255, 255, 255), font=font)
+            draw.text((20, 240), "Check Python console", fill=(255, 200, 200), font=font)
+            return result
+
     generate_btn.click(
-        fn=extract_and_process,
+        fn=safe_extract_and_process,
         inputs=[product_image, scene_style, controlnet_strength, scribble_pad, scribble_template],
         outputs=[result_image],
     )
