@@ -151,8 +151,41 @@ def generate_prompt(bg_type, image=None):
 
 
 def process_scribble(raw_scribble):
-    """预处理画板原始涂鸦数据为 ControlNet 标准输入。"""
-    if raw_scribble is not None:
+    """预处理画板原始涂鸦数据为 ControlNet 标准输入。
+    
+    Gradio 6.0 Sketchpad 可能返回 dict 格式数据，需要提取图像。
+    """
+    # 处理 Gradio 6.0 Sketchpad 返回的 dict 格式
+    if isinstance(raw_scribble, dict):
+        # 尝试从 dict 中提取图像数据
+        # 可能的键: 'image', 'composite', 'background', 'layers' 等
+        print(f"Sketchpad returned dict with keys: {list(raw_scribble.keys())}")
+        
+        # 优先尝试常见的图像键
+        for key in ['composite', 'image', 'background', 'layer']:
+            if key in raw_scribble and raw_scribble[key] is not None:
+                raw_scribble = raw_scribble[key]
+                print(f"Extracted image from dict key: {key}")
+                break
+        else:
+            # 如果找不到图像键，尝试第一个非 None 值
+            for key, value in raw_scribble.items():
+                if value is not None and key != 'layers':
+                    raw_scribble = value
+                    print(f"Extracted image from dict key: {key}")
+                    break
+    
+    # 如果还是 dict 或 None，返回白色占位图
+    if raw_scribble is None:
+        print("No scribble data, returning white placeholder")
+        return Image.new("RGB", (512, 512), color=(255, 255, 255))
+    
+    if isinstance(raw_scribble, dict):
+        print("WARNING: Still got dict after extraction, returning white placeholder")
+        return Image.new("RGB", (512, 512), color=(255, 255, 255))
+    
+    # 现在应该是 PIL Image 了
+    if hasattr(raw_scribble, 'mode'):
         # 转换为 RGB 模式（处理 RGBA 透明通道）并缩放到 512x512
         if raw_scribble.mode == "RGBA":
             background = Image.new("RGB", raw_scribble.size, (255, 255, 255))
@@ -161,7 +194,9 @@ def process_scribble(raw_scribble):
         else:
             scribble = raw_scribble.convert("RGB")
         return scribble.resize((512, 512))
-    # 无涂鸦时返回白色占位图
+    
+    # 未知类型
+    print(f"WARNING: Unknown scribble type: {type(raw_scribble)}, returning white placeholder")
     return Image.new("RGB", (512, 512), color=(255, 255, 255))
 
 
@@ -629,9 +664,14 @@ with demo:
             print("=" * 60)
             print("safe_extract_and_process 被调用")
             print(f"  product_image type: {type(product_image)}")
+            if isinstance(product_image, dict):
+                print(f"  product_image keys: {list(product_image.keys())}")
             print(f"  scene_style: {scene_style}")
             print(f"  controlnet_strength: {controlnet_strength}")
             print(f"  scribble_pad type: {type(scribble_pad)}")
+            if isinstance(scribble_pad, dict):
+                print(f"  scribble_pad keys: {list(scribble_pad.keys())}")
+                print(f"  scribble_pad values types: {[type(v) for v in scribble_pad.values()]}")
             print(f"  scribble_template: {scribble_template}")
             print("=" * 60)
             return extract_and_process(product_image, scene_style, controlnet_strength, scribble_pad, scribble_template)
