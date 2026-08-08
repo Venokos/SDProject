@@ -1,0 +1,32 @@
+## 跑通项目的操作方式
+
+### 第一步：安装 Python 依赖
+
+```bash
+pip install gradio==6.0.0 numpy pillow requests
+```
+
+### 第二步：启动 Stable Diffusion WebUI
+
+
+确保：
+- WebUI 运行在 `http://127.0.0.1:7860`
+- 已安装 ControlNet 扩展和 `controlnet_v11p_sd15_scribble` 模型
+
+### 第三步：启动 Gradio 界面
+
+```bash
+cd ui界面
+python app.py
+```
+
+启动后浏览器自动打开 `http://127.0.0.1:7861`
+
+### 第四步：使用界面生成图片
+
+1. 上传商品图（可选）
+2. 选择场景风格（studio / beach / nature / luxury / minimal）
+3. 选择 Scribble 模板（桌面 / 展示台 / 自定义画板）
+4. 调节 ControlNet 强度（建议 0.7-1.0）
+5. 在画板绘制构图草稿（若选了自定义画板）
+6. 点击 **生成** 按钮
