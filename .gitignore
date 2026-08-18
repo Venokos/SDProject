@@ -1,4 +1,13 @@
 .env
 
-.codex/
 .aider*
+
+pyOutput
+ui/pyOutput
+
+aiderAdjustAPI.txt
+howToLaunch.txt
+
+*.pdf
+*.docx
+*.doc

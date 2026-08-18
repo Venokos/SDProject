@@ -5,7 +5,7 @@
 #   版本号:      v2.0.0
 #   创建日期:    2026-04-18
 #   最后修改:    2026-04-20
-#   作者:        
+#   作者:
 #
 #   描述:
 #       基于 Gradio Blocks 构建的商品场景图生成工具前端原型。
@@ -128,7 +128,7 @@ def generate_prompt(bg_type, image=None):
     """
     # 将 UI 的 bg_type 映射到 prompt_generator 的参数
     prompt_bg_type = BG_TYPE_MAP.get(bg_type, "简约")
-    
+
     # 获取该场景风格的详细配置
     bg_config = BG_CONFIG_MAP.get(bg_type, {})
     composition = bg_config.get("composition", "中心")
@@ -152,7 +152,7 @@ def generate_prompt(bg_type, image=None):
 
 def process_scribble(raw_scribble):
     """预处理画板原始涂鸦数据为 ControlNet 标准输入。
-    
+
     Gradio 6.0 Sketchpad 可能返回 dict 格式数据，需要提取图像。
     """
     # 处理 Gradio 6.0 Sketchpad 返回的 dict 格式
@@ -160,7 +160,7 @@ def process_scribble(raw_scribble):
         # 尝试从 dict 中提取图像数据
         # 可能的键: 'image', 'composite', 'background', 'layers' 等
         print(f"Sketchpad returned dict with keys: {list(raw_scribble.keys())}")
-        
+
         # 优先尝试常见的图像键
         for key in ['composite', 'image', 'background', 'layer']:
             if key in raw_scribble and raw_scribble[key] is not None:
@@ -174,16 +174,16 @@ def process_scribble(raw_scribble):
                     raw_scribble = value
                     print(f"Extracted image from dict key: {key}")
                     break
-    
+
     # 如果还是 dict 或 None，返回白色占位图
     if raw_scribble is None:
         print("No scribble data, returning white placeholder")
         return Image.new("RGB", (512, 512), color=(255, 255, 255))
-    
+
     if isinstance(raw_scribble, dict):
         print("WARNING: Still got dict after extraction, returning white placeholder")
         return Image.new("RGB", (512, 512), color=(255, 255, 255))
-    
+
     # 现在应该是 PIL Image 了
     if hasattr(raw_scribble, 'mode'):
         # 转换为 RGB 模式（处理 RGBA 透明通道）并缩放到 512x512
@@ -194,7 +194,7 @@ def process_scribble(raw_scribble):
         else:
             scribble = raw_scribble.convert("RGB")
         return scribble.resize((512, 512))
-    
+
     # 未知类型
     print(f"WARNING: Unknown scribble type: {type(raw_scribble)}, returning white placeholder")
     return Image.new("RGB", (512, 512), color=(255, 255, 255))
@@ -265,7 +265,7 @@ def generate_image(prompt, scribble, weight, image, scribble_template=None):
         print(f"  scribble_path: {scribble_path}")
         print(f"  weight: {weight}")
         print(f"  product_image_path: {product_image_path}")
-        
+
         output_path = sd_generate_image(
             prompt=prompt,
             scribble_path=scribble_path,
@@ -620,7 +620,7 @@ with demo:
                         elem_id="sketchpad-area",
                         brush=gr.Brush(
                             colors=[
-                                "#000000", "#ef4444", "#22c55e", "#3b82f6", 
+                                "#000000", "#ef4444", "#22c55e", "#3b82f6",
                                 "#f59e0b", "#a855f7", "#00aaaa", "#ffffff",
                             ],
                             default_size=5,
@@ -737,10 +737,10 @@ with demo:
         function fixCanvas() {
             var pad = document.getElementById('sketchpad-area');
             if (!pad) return;
-            
+
             // 触发 window resize
             window.dispatchEvent(new Event('resize'));
-            
+
             // 抖动容器宽度触发 ResizeObserver
             var oldWidth = pad.style.width;
             pad.style.width = '99.5%';
@@ -748,7 +748,7 @@ with demo:
                 pad.style.width = oldWidth || '100%';
             }, 50);
         }
-        
+
         // 在页面加载后的不同阶段多次触发, 确保覆盖组件挂载完成的时机
         setTimeout(fixCanvas, 100);
         //setTimeout(fixCanvas, 200);

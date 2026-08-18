@@ -245,7 +245,7 @@ def generate_prompt(bg_type: str, image: PIL.Image.Image = None) -> str
 |--------|------|--------------------|
 | prompt | str  | 英文 Prompt 文本   |
 
-负责人: 
+负责人:
 
 ---
 
@@ -265,7 +265,7 @@ def process_scribble(raw_scribble: dict | PIL.Image.Image) -> PIL.Image.Image
 |----------|-----------------|---------------------------|
 | scribble | PIL.Image.Image | 512x512 RGB 标准线稿图    |
 
-负责人: 
+负责人:
 
 ---
 
@@ -293,7 +293,7 @@ def generate_image(
 |--------|-----------------|-------------------------|
 | result | PIL.Image.Image | 512x512 最终生成图像    |
 
-负责人: 
+负责人:
 
 ---
 
