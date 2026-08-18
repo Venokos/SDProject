@@ -11,3 +11,9 @@ howToLaunch.txt
 *.pdf
 *.docx
 *.doc
+
+# Python缓存文件不要提交
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
