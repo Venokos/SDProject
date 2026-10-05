@@ -346,8 +346,6 @@ with gr.Blocks(title="可控智能电商背景生成系统") as demo:
         outputs=[status_md, seed_display, result_image, download_btn],
     )
 
-
-if __name__ == "__main__":
     demo.load(
         fn=None,
         inputs=None,
@@ -357,6 +355,9 @@ if __name__ == "__main__":
             document.documentElement.classList.add('dark');
         }""",
     )
+
+
+if __name__ == "__main__":
     demo.queue(default_concurrency_limit=1).launch(
         server_name="127.0.0.1",
         server_port=7861,
