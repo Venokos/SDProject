@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""最终 Web/UI：三栏深色布局，参考原 ui/app.py 设计。"""
+"""最终 Web/UI：宽屏桌面布局，深色产品化视觉。"""
 
 from __future__ import annotations
 
@@ -114,7 +114,7 @@ def on_generate(product_image: Any, prompt_text: str, seed_mode: str | None, see
         actual_seed = client.random_seed() if mode == "random" else fixed_seed
         api_prompt = client.build_prompt(filename, prompt, actual_seed)
 
-        yield "⏳ 正在生成，请稍候……", "", None, None
+        yield "⏳ 等待生成……", "", None, None
         prompt_id = client.queue_prompt(api_prompt)
         history = client.wait_for_result(prompt_id)
         result = client.extract_image(history)
@@ -129,122 +129,201 @@ def on_generate(product_image: Any, prompt_text: str, seed_mode: str | None, see
 
 
 CUSTOM_CSS = """
-/* 浅色变量（默认会被 JS 添加的 .dark 覆盖） */
 :root {
-    --bg-body: #0b1121;
-    --bg-wrapper: #111827;
-    --border-wrapper: #1e3a8a;
-    --border-col: #1f2937;
-    --text-title: #f3f4f6;
-    --text-sub: #9ca3af;
-    --text-body: #d1d5db;
-    --text-muted: #6b7280;
-    --radio-bg: #1f2937;
-    --radio-border: #374151;
-    --radio-active-bg: rgba(37, 99, 235, 0.16);
-    --radio-active-border: #3b82f6;
-    --radio-label: #93c5fd;
+    --bg-body: #0b1120;
+    --bg-card: #131b2c;
+    --bg-control: #1b2438;
+    --border-card: #233049;
+    --border-soft: #2c3a55;
+    --text: #e5e9f2;
+    --muted: #94a3b8;
+    --accent: #3b82f6;
+    --accent-strong: #2563eb;
 }
 
-body {
+html, body {
     margin: 0 !important;
     background: var(--bg-body) !important;
-    color: var(--text-title) !important;
+    color: var(--text) !important;
 }
+
 .gradio-container {
-    max-width: 1680px !important;
-    padding: 0 20px !important;
+    max-width: min(92vw, 1440px) !important;
+    width: min(92vw, 1440px) !important;
     margin: 0 auto !important;
+    padding: 24px 32px !important;
     background: transparent !important;
 }
 footer { display: none !important; }
 
-#title-bar { text-align: center; padding: 14px 0 6px; }
+#title-bar { text-align: center; margin-bottom: 18px; }
 #title-bar h1 {
-    font-size: 1.8rem; margin-bottom: 0;
-    background: linear-gradient(90deg, #60a5fa, #a78bfa, #c084fc);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-#title-bar p { color: var(--text-sub); margin-top: 4px; font-size: 0.9rem; }
-
-#outer-wrapper {
-    border: 1px solid var(--border-wrapper);
-    border-radius: 16px;
-    background: var(--bg-wrapper) !important;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.45);
-    padding: 0 !important;
-    margin-bottom: 30px;
-}
-
-#main-row { display: flex !important; flex-wrap: nowrap !important; gap: 0 !important; align-items: stretch !important; }
-#col-left   { flex: 0 0 24% !important; max-width: 24% !important; min-width: 0 !important; }
-#col-center { flex: 0 0 48% !important; max-width: 48% !important; min-width: 0 !important; }
-#col-right  { flex: 0 0 28% !important; max-width: 28% !important; min-width: 0 !important; }
-
-.col-inner {
-    padding: 18px !important;
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-#col-left .col-inner   { border-right: 1px solid var(--border-col) !important; }
-#col-center .col-inner { border-right: 1px solid var(--border-col) !important; }
-.col-inner h3 {
-    font-size: 1rem !important; color: var(--text-title) !important;
-    margin: 0 0 12px !important; padding-bottom: 10px !important;
-    border-bottom: 2px solid var(--border-col) !important;
-}
-
-/* Radio 选择器（Seed / 风格） */
-#seed-radio label, #style-radio label {
-    background: var(--radio-bg) !important;
-    border: 1px solid var(--radio-border) !important;
-    border-radius: 10px !important;
-    padding: 9px 11px !important;
+    font-size: 1.65rem !important;
     margin: 0 !important;
+    background: linear-gradient(90deg, #60a5fa, #a78bfa, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+#title-bar p { color: var(--muted); margin: 6px 0 0 !important; font-size: 0.9rem !important; }
+
+/* 三栏网格 */
+#main-row {
+    display: grid !important;
+    grid-template-columns: minmax(250px, 290px) minmax(520px, 1fr) minmax(330px, 390px);
+    gap: 16px !important;
+    align-items: start !important;
+}
+
+#col-left, #col-center, #col-right {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-card) !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+    min-width: 0 !important;
+    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.22);
+}
+#col-center { border-color: rgba(59, 130, 246, 0.38) !important; }
+
+#col-left h3, #col-center h3, #col-right h3 {
+    font-size: 1rem !important;
+    color: var(--text) !important;
+    margin: 0 0 12px !important;
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid var(--border-soft) !important;
+}
+
+/* 标签收紧 */
+#col-left label span, #col-right label span,
+#col-left .label-wrap span, #col-right .label-wrap span {
+    font-size: 0.82rem !important;
+    color: var(--muted) !important;
+}
+
+/* Seed 分段控件 */
+#seed-radio .wrap {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    padding: 0 !important;
+}
+#seed-radio label {
+    flex: 1 !important;
+    text-align: center !important;
+    background: var(--bg-control) !important;
+    border: 1px solid var(--border-card) !important;
+    border-radius: 8px !important;
+    padding: 8px 10px !important;
     cursor: pointer !important;
     transition: background 0.2s ease, border-color 0.2s ease !important;
 }
-#seed-radio label:hover, #style-radio label:hover { border-color: var(--radio-active-border) !important; }
-#seed-radio label.selected, #style-radio label.selected,
-#seed-radio label:has(input:checked), #style-radio label:has(input:checked) {
-    background: var(--radio-active-bg) !important;
-    border-color: var(--radio-active-border) !important;
+#seed-radio label:hover { border-color: var(--border-soft) !important; }
+#seed-radio label.selected,
+#seed-radio label:has(input:checked) {
+    background: rgba(59, 130, 246, 0.18) !important;
+    border-color: var(--accent) !important;
 }
-#seed-radio input[type="radio"], #style-radio input[type="radio"] { display: none !important; }
-#seed-radio label span, #style-radio label span {
-    font-size: 0.82rem !important; font-weight: 600 !important; color: var(--radio-label) !important;
-}
-#seed-radio .wrap, #style-radio .wrap { display: flex !important; flex-direction: column !important; gap: 7px !important; }
+#seed-radio input[type="radio"] { display: none !important; }
+#seed-radio label span { color: var(--text) !important; font-weight: 600 !important; font-size: 0.82rem !important; }
 
-/* 生成 / 下载按钮 */
-#action-row { display: flex !important; gap: 12px !important; margin-top: 14px !important; }
-#generate-btn, #download-btn {
+/* 示例风格：2 列网格 */
+#style-radio .wrap {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 0 !important;
+}
+#style-radio label {
+    background: var(--bg-control) !important;
+    border: 1px solid var(--border-card) !important;
+    border-radius: 8px !important;
+    padding: 8px 10px !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    transition: background 0.2s ease, border-color 0.2s ease !important;
+}
+#style-radio label:hover { border-color: var(--border-soft) !important; }
+#style-radio label.selected,
+#style-radio label:has(input:checked) {
+    background: rgba(59, 130, 246, 0.18) !important;
+    border-color: var(--accent) !important;
+}
+#style-radio input[type="radio"] { display: none !important; }
+#style-radio label span { font-size: 0.8rem !important; color: var(--text) !important; font-weight: 500 !important; }
+
+/* 背景描述 textarea 固定高度 */
+#prompt-text textarea {
+    height: 210px !important;
+    min-height: 210px !important;
+    max-height: 340px !important;
+    resize: vertical !important;
+}
+
+/* 状态区 */
+#status-md { min-height: 24px !important; margin: 8px 0 !important; }
+
+/* 结果预览 */
+#result-img .image-container { min-height: 460px !important; border-radius: 10px !important; }
+#result-img img {
+    object-fit: contain !important;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* 主 CTA */
+#generate-btn {
+    width: 100% !important;
+    height: 50px !important;
+    background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
     color: #fff !important;
     border: none !important;
     border-radius: 10px !important;
+    font-size: 1.05rem !important;
     font-weight: 700 !important;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
-    transition: all 0.2s ease !important;
+    margin-top: 14px !important;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35) !important;
 }
-#generate-btn { background: #2563eb !important; font-size: 1.15rem !important; padding: 13px 24px !important; flex: 1 !important; }
-#download-btn { background: #2563eb !important; flex: 0 0 auto !important; }
-#generate-btn:hover, #download-btn:hover { filter: brightness(1.1); }
+#generate-btn:hover { filter: brightness(1.08); }
 
-/* 结果图 */
-#result-img .image-container { border-radius: 10px !important; }
+/* 次级按钮 */
+#result-actions { display: flex !important; gap: 10px !important; margin-top: 10px !important; }
+#result-actions > * { flex: 1 !important; }
+#download-btn, #regenerate-btn {
+    flex: 1 !important;
+    background: var(--bg-control) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border-card) !important;
+    border-radius: 9px !important;
+    font-weight: 600 !important;
+    padding: 9px 0 !important;
+}
 
 /* 深色组件覆盖 */
 .dark {
     --body-background-fill: var(--bg-body) !important;
-    --background-fill-primary: var(--bg-wrapper) !important;
-    --background-fill-secondary: #1f2937 !important;
-    --border-color-primary: #374151 !important;
-    --block-background-fill: #1f2937 !important;
-    --block-border-color: #374151 !important;
-    --input-background-fill: #1f2937 !important;
-    --body-text-color: #f3f4f6 !important;
-    --body-text-color-subdued: #d1d5db !important;
+    --background-fill-primary: var(--bg-card) !important;
+    --background-fill-secondary: var(--bg-control) !important;
+    --border-color-primary: var(--border-card) !important;
+    --block-background-fill: var(--bg-control) !important;
+    --block-border-color: var(--border-card) !important;
+    --input-background-fill: #101827 !important;
+    --body-text-color: var(--text) !important;
+    --body-text-color-subdued: var(--muted) !important;
+}
+
+/* 响应式 */
+@media (min-width: 1100px) and (max-width: 1439px) {
+    #main-row {
+        grid-template-columns: minmax(210px, 250px) minmax(400px, 1fr) minmax(270px, 320px);
+    }
+}
+
+@media (max-width: 1099px) {
+    #main-row {
+        grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.3fr);
+    }
+    #col-left { grid-column: 1; grid-row: 1; }
+    #col-center { grid-column: 2; grid-row: 1; }
+    #col-right { grid-column: 1 / -1; grid-row: 2; }
 }
 """
 
@@ -252,77 +331,83 @@ footer { display: none !important; }
 with gr.Blocks(title="可控智能电商背景生成系统") as demo:
     gr.HTML(
         '<div id="title-bar"><h1>可控智能电商背景生成系统</h1>'
-        "<p>上传商品图 · 选择示例提示词或风格 · 一键生成背景图</p></div>"
+        "<p>上传商品图 · 设置背景 · 一键生成</p></div>"
     )
 
-    with gr.Group(elem_id="outer-wrapper"):
-        with gr.Row(equal_height=True, elem_id="main-row"):
-            # ---------------- 左栏：商品 & Seed ----------------
-            with gr.Column(scale=1, min_width=0, elem_id="col-left"):
-                with gr.Column(elem_classes="col-inner"):
-                    gr.Markdown("### 商品 & Seed")
-                    product_image = gr.Image(
-                        label="上传商品图",
-                        type="pil",
-                        sources=["upload"],
-                        height=250,
-                    )
-                    gr.Markdown("#### Seed 设置")
-                    seed_mode = gr.Radio(
-                        choices=["随机 Seed", "固定 Seed"],
-                        value="随机 Seed",
-                        label="Seed 模式",
-                        elem_id="seed-radio",
-                    )
-                    seed_input = gr.Textbox(
-                        label="固定 Seed",
-                        placeholder="随机模式：生成后自动显示本次 Seed",
-                        interactive=False,
-                    )
-                    seed_display = gr.Textbox(label="本次 Seed", interactive=False)
+    with gr.Row(elem_id="main-row"):
+        # ---------------- 左栏：商品 & Seed ----------------
+        with gr.Column(scale=1, elem_id="col-left"):
+            gr.Markdown("### 商品 & Seed")
+            product_image = gr.Image(
+                label="上传商品图",
+                type="pil",
+                sources=["upload"],
+                height=230,
+            )
+            seed_mode = gr.Radio(
+                choices=["随机 Seed", "固定 Seed"],
+                value="随机 Seed",
+                label="Seed 模式",
+                elem_id="seed-radio",
+            )
+            seed_input = gr.Textbox(
+                label="固定 Seed",
+                placeholder="请输入一个整数",
+                interactive=False,
+                elem_id="seed-input",
+            )
+            seed_display = gr.Textbox(
+                label="本次 Seed",
+                interactive=False,
+                elem_id="seed-display",
+            )
 
-            # ---------------- 中栏：结果 ----------------
-            with gr.Column(scale=2, min_width=0, elem_id="col-center"):
-                with gr.Column(elem_classes="col-inner"):
-                    gr.Markdown("### 生成结果")
-                    status_md = gr.Markdown("等待生成……")
-                    result_image = gr.Image(
-                        label="结果预览",
-                        type="pil",
-                        interactive=False,
-                        height=560,
-                        elem_id="result-img",
-                    )
-                    with gr.Row(elem_id="action-row"):
-                        generate_btn = gr.Button("生成", variant="primary", elem_id="generate-btn")
-                        download_btn = gr.DownloadButton(
-                            "下载结果图",
-                            value=None,
-                            interactive=False,
-                            elem_id="download-btn",
-                        )
+        # ---------------- 中栏：生成结果 ----------------
+        with gr.Column(scale=2, elem_id="col-center"):
+            gr.Markdown("### 生成结果")
+            status_md = gr.Markdown("", elem_id="status-md")
+            result_image = gr.Image(
+                label="结果预览",
+                type="pil",
+                interactive=False,
+                height=520,
+                elem_id="result-img",
+            )
+            generate_btn = gr.Button("生成背景", variant="primary", elem_id="generate-btn")
+            with gr.Row(elem_id="result-actions"):
+                download_btn = gr.DownloadButton(
+                    "下载结果",
+                    value=None,
+                    interactive=False,
+                    elem_id="download-btn",
+                )
+                regenerate_btn = gr.Button(
+                    "换一个结果",
+                    variant="secondary",
+                    elem_id="regenerate-btn",
+                )
 
-            # ---------------- 右栏：提示词 ----------------
-            with gr.Column(scale=1, min_width=0, elem_id="col-right"):
-                with gr.Column(elem_classes="col-inner"):
-                    gr.Markdown("### 提示词")
-                    sample_prompt = gr.Dropdown(
-                        choices=_EXAMPLE_TITLES,
-                        label="示例提示词",
-                        value=None,
-                    )
-                    style_radio = gr.Radio(
-                        choices=_STYLE_NAMES,
-                        label="示例风格",
-                        value=None,
-                        elem_id="style-radio",
-                    )
-                    prompt_text = gr.Textbox(
-                        label="背景描述",
-                        lines=12,
-                        placeholder="场景 + 商品 + 光线 + 摄影方式",
-                        elem_id="prompt-text",
-                    )
+        # ---------------- 右栏：提示词 ----------------
+        with gr.Column(scale=1, elem_id="col-right"):
+            gr.Markdown("### 提示词")
+            sample_prompt = gr.Dropdown(
+                choices=_EXAMPLE_TITLES,
+                label="示例提示词",
+                value=None,
+                elem_id="sample-prompt",
+            )
+            style_radio = gr.Radio(
+                choices=_STYLE_NAMES,
+                label="示例风格",
+                value=None,
+                elem_id="style-radio",
+            )
+            prompt_text = gr.Textbox(
+                label="背景描述",
+                lines=8,
+                placeholder="场景 + 商品 + 光线 + 摄影方式",
+                elem_id="prompt-text",
+            )
 
     sample_prompt.change(
         fn=fill_prompt,
@@ -341,6 +426,11 @@ with gr.Blocks(title="可控智能电商背景生成系统") as demo:
     )
 
     generate_btn.click(
+        fn=on_generate,
+        inputs=[product_image, prompt_text, seed_mode, seed_input],
+        outputs=[status_md, seed_display, result_image, download_btn],
+    )
+    regenerate_btn.click(
         fn=on_generate,
         inputs=[product_image, prompt_text, seed_mode, seed_input],
         outputs=[status_md, seed_display, result_image, download_btn],
