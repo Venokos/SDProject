@@ -29,6 +29,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 _EXAMPLES = load_example_prompts()
 _EXAMPLE_TITLES = [ex["title"] for ex in _EXAMPLES]
 _EXAMPLE_BY_TITLE = {ex["title"]: ex["prompt"] for ex in _EXAMPLES}
+_SAMPLE_CHOICES = ["无"] + _EXAMPLE_TITLES
 _STYLE_NAMES = get_style_display_names()
 
 client = ComfyUIClient()
@@ -50,15 +51,19 @@ def _coerce_pil(image: Any) -> Image.Image | None:
 
 
 def on_sample_prompt(title: str | None):
-    if not title:
-        return "", gr.update(value=None)
+    if not title or title == "无":
+        return "", gr.update()
     return _EXAMPLE_BY_TITLE.get(title, ""), gr.update(value=None)
 
 
 def on_style_prompt(style_name: str | None):
     if not style_name:
-        return "", gr.update(value=None)
-    return get_style_prompt(style_name), gr.update(value=None)
+        return "", gr.update()
+    return get_style_prompt(style_name), gr.update(value="无")
+
+
+def on_clear():
+    return "", gr.update(value=None), gr.update(value="无")
 
 
 def toggle_seed(seed_mode: str | None) -> Any:
@@ -413,9 +418,9 @@ with gr.Blocks(title="可控智能电商背景生成系统") as demo:
         with gr.Column(scale=1, elem_id="col-right"):
             gr.Markdown("### 提示词")
             sample_prompt = gr.Dropdown(
-                choices=_EXAMPLE_TITLES,
+                choices=_SAMPLE_CHOICES,
                 label="示例提示词",
-                value=None,
+                value="无",
                 elem_id="sample-prompt",
             )
             style_radio = gr.Radio(
@@ -447,9 +452,9 @@ with gr.Blocks(title="可控智能电商背景生成系统") as demo:
         outputs=[prompt_text, sample_prompt],
     )
     clear_btn.click(
-        fn=lambda: "",
+        fn=on_clear,
         inputs=None,
-        outputs=prompt_text,
+        outputs=[prompt_text, style_radio, sample_prompt],
     )
     seed_mode.change(
         fn=toggle_seed,
