@@ -33,6 +33,7 @@ _SAMPLE_CHOICES = ["无"] + _EXAMPLE_TITLES
 _STYLE_NAMES = get_style_display_names()
 
 client = ComfyUIClient()
+_pending_sample_ignore = False
 
 
 def _coerce_pil(image: Any) -> Image.Image | None:
@@ -51,14 +52,21 @@ def _coerce_pil(image: Any) -> Image.Image | None:
 
 
 def on_sample_prompt(title: str | None):
+    global _pending_sample_ignore
+    if _pending_sample_ignore:
+        _pending_sample_ignore = False
+        return gr.update(), gr.update()
     if not title or title == "无":
         return "", gr.update()
     return _EXAMPLE_BY_TITLE.get(title, ""), gr.update(value=None)
 
 
-def on_style_prompt(style_name: str | None):
+def on_style_prompt(style_name: str | None, current_sample: str | None = None):
+    global _pending_sample_ignore
     if not style_name:
         return gr.update(), gr.update()
+    if current_sample != "无":
+        _pending_sample_ignore = True
     return get_style_prompt(style_name), gr.update(value="无")
 
 
@@ -448,7 +456,7 @@ with gr.Blocks(title="可控智能电商背景生成系统") as demo:
     )
     style_radio.change(
         fn=on_style_prompt,
-        inputs=style_radio,
+        inputs=[style_radio, sample_prompt],
         outputs=[prompt_text, sample_prompt],
     )
     clear_btn.click(
