@@ -13,39 +13,36 @@
 ```text
 PythonSD/
 ├── backend/
-│   ├── comfyui_client.py        # 最终后端：UI 工作流转 API、上传图片、提交/轮询/取图
-│   └── generate.py              # 旧版 A1111 WebUI 生成（已弃用，仅保留参考）
+│   └── comfyui_client.py        # 最终后端：UI 工作流转 API、上传图片、提交/轮询/取图
 │
 ├── ui/
 │   ├── app_final.py             # 最终 Web/UI（宽屏三栏深色界面）
-│   ├── app.py                   # 旧版 Scribble/WebUI 原型
-│   ├── requirements.txt         # 前端 Python 依赖
-│   ├── README.md
-│   └── pyOutput/                # 生成结果图片缓存（已 gitignore）
+│   └── requirements.txt         # 前端 Python 依赖
 │
 ├── prompt/
 │   ├── prompt_generator.py      # Prompt 生成器 + 五种场景风格中文示例提示词
 │   ├── examples.py              # 解析 prompts3.txt 示例提示词
-│   ├── prompts3.txt             # 七组商品/场景示例提示词
-│   ├── ecommerce_background_generator.py
-│   └── README.md
+│   └── prompts3.txt             # 七组商品/场景示例提示词
 │
 ├── workflow/
-│   ├── z-turbo (FINAL2) .json   # ★ 最终冻结工作流（Web 实际使用）
-│   ├── baseline.json            # 早期 baseline（参考）
-│   ├── z-turbo (FINAL).json     # 上一版最终（参考）
-│   ├── N+M+C FINAL BASELINE (Universal).json   # 参考
-│   ├── image_z_image_turbo_fun_union_controlnet(example).json  # 参考
-│   └── Fragrance/               # 香水专项实验工作流（参考）
+│   └── z-turbo (FINAL2) .json   # ★ 最终冻结工作流（Web 实际使用）
 │
-├── scribble/                    # Scribble 模板（旧方案，已弃用）
-├── Project-B/                   # Scribble 模板（旧方案，已弃用）
+├── deprecated/                  # 已废弃 / 过时 / 实验性文件（按类别归档）
+│   ├── backend/                 #   旧 A1111 后端 generate.py
+│   ├── ui/                      #   旧 Scribble UI app.py + README
+│   ├── prompt/                  #   旧 Prompt CLI + README
+│   ├── scribble/                #   旧 Scribble 模板方案
+│   ├── project-b/               #   旧 Scribble 模板（B 分支）
+│   ├── workflow/                #   早期/实验工作流与 fragrance 专项
+│   └── docs/                    #   旧启动说明与旧计划
+│
 ├── input/                       # 测试商品图（已 gitignore）
+├── pyOutput/                    # 旧输出图片（历史遗留，已 gitignore）
 │
+├── README.md                    # 本说明
 ├── PROJECT.md                   # 项目概况
 ├── WEB_INTEGRATION.md           # Web/UI 整合说明
-├── howToLaunch.txt              # 旧版启动说明（A1111，已过时）
-└── Schedule2.0_basic.md
+└── .gitignore
 ```
 
 核心数据流：
