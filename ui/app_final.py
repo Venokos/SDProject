@@ -130,13 +130,15 @@ def on_generate(product_image: Any, prompt_text: str, seed_mode: str | None, see
 
 CUSTOM_CSS = """
 :root {
-    --bg-body: #0b1120;
-    --bg-card: #131b2c;
-    --bg-control: #1b2438;
-    --border-card: #233049;
-    --border-soft: #2c3a55;
-    --text: #e5e9f2;
-    --muted: #94a3b8;
+    --bg-body: #0b1121;
+    --bg-card: #111827;
+    --bg-control: #1f2937;
+    --border-card: #1e3a8a;
+    --border-control: #374151;
+    --border-hover: #4b5563;
+    --border-soft: #1f2937;
+    --text: #f3f4f6;
+    --muted: #9ca3af;
     --accent: #3b82f6;
     --accent-strong: #2563eb;
 }
@@ -171,7 +173,7 @@ footer { display: none !important; }
     display: grid !important;
     grid-template-columns: minmax(250px, 290px) minmax(520px, 1fr) minmax(330px, 390px);
     gap: 16px !important;
-    align-items: start !important;
+    align-items: stretch !important;
 }
 
 #col-left, #col-center, #col-right {
@@ -210,13 +212,13 @@ footer { display: none !important; }
     flex: 1 !important;
     text-align: center !important;
     background: var(--bg-control) !important;
-    border: 1px solid var(--border-card) !important;
+    border: 1px solid var(--border-control) !important;
     border-radius: 8px !important;
     padding: 8px 10px !important;
     cursor: pointer !important;
     transition: background 0.2s ease, border-color 0.2s ease !important;
 }
-#seed-radio label:hover { border-color: var(--border-soft) !important; }
+#seed-radio label:hover { border-color: var(--border-hover) !important; }
 #seed-radio label.selected,
 #seed-radio label:has(input:checked) {
     background: rgba(59, 130, 246, 0.18) !important;
@@ -234,14 +236,14 @@ footer { display: none !important; }
 }
 #style-radio label {
     background: var(--bg-control) !important;
-    border: 1px solid var(--border-card) !important;
+    border: 1px solid var(--border-control) !important;
     border-radius: 8px !important;
     padding: 8px 10px !important;
     cursor: pointer !important;
     text-align: center !important;
     transition: background 0.2s ease, border-color 0.2s ease !important;
 }
-#style-radio label:hover { border-color: var(--border-soft) !important; }
+#style-radio label:hover { border-color: var(--border-hover) !important; }
 #style-radio label.selected,
 #style-radio label:has(input:checked) {
     background: rgba(59, 130, 246, 0.18) !important;
@@ -291,21 +293,30 @@ footer { display: none !important; }
     flex: 1 !important;
     background: var(--bg-control) !important;
     color: var(--text) !important;
-    border: 1px solid var(--border-card) !important;
+    border: 1px solid var(--border-control) !important;
     border-radius: 9px !important;
     font-weight: 600 !important;
     padding: 9px 0 !important;
+}
+#clear-btn {
+    width: 100% !important;
+    background: var(--bg-control) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border-control) !important;
+    border-radius: 9px !important;
+    font-weight: 600 !important;
+    margin-top: 8px !important;
 }
 
 /* 深色组件覆盖 */
 .dark {
     --body-background-fill: var(--bg-body) !important;
     --background-fill-primary: var(--bg-card) !important;
-    --background-fill-secondary: var(--bg-control) !important;
-    --border-color-primary: var(--border-card) !important;
-    --block-background-fill: var(--bg-control) !important;
-    --block-border-color: var(--border-card) !important;
-    --input-background-fill: #101827 !important;
+    --background-fill-secondary: #1f2937 !important;
+    --border-color-primary: #374151 !important;
+    --block-background-fill: #1f2937 !important;
+    --block-border-color: #374151 !important;
+    --input-background-fill: #1f2937 !important;
     --body-text-color: var(--text) !important;
     --body-text-color-subdued: var(--muted) !important;
 }
@@ -408,6 +419,11 @@ with gr.Blocks(title="可控智能电商背景生成系统") as demo:
                 placeholder="场景 + 商品 + 光线 + 摄影方式",
                 elem_id="prompt-text",
             )
+            clear_btn = gr.Button(
+                "清空",
+                variant="secondary",
+                elem_id="clear-btn",
+            )
 
     sample_prompt.change(
         fn=fill_prompt,
@@ -417,6 +433,11 @@ with gr.Blocks(title="可控智能电商背景生成系统") as demo:
     style_radio.change(
         fn=fill_style_prompt,
         inputs=style_radio,
+        outputs=prompt_text,
+    )
+    clear_btn.click(
+        fn=lambda: "",
+        inputs=None,
         outputs=prompt_text,
     )
     seed_mode.change(
