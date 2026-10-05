@@ -58,7 +58,7 @@ def on_sample_prompt(title: str | None):
 
 def on_style_prompt(style_name: str | None):
     if not style_name:
-        return "", gr.update()
+        return gr.update(), gr.update()
     return get_style_prompt(style_name), gr.update(value="无")
 
 
