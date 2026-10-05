@@ -49,16 +49,16 @@ def _coerce_pil(image: Any) -> Image.Image | None:
     return None
 
 
-def fill_prompt(title: str | None) -> str:
+def on_sample_prompt(title: str | None):
     if not title:
-        return ""
-    return _EXAMPLE_BY_TITLE.get(title, "")
+        return "", gr.update(value=None)
+    return _EXAMPLE_BY_TITLE.get(title, ""), gr.update(value=None)
 
 
-def fill_style_prompt(style_name: str | None) -> str:
+def on_style_prompt(style_name: str | None):
     if not style_name:
-        return ""
-    return get_style_prompt(style_name)
+        return "", gr.update(value=None)
+    return get_style_prompt(style_name), gr.update(value=None)
 
 
 def toggle_seed(seed_mode: str | None) -> Any:
@@ -182,6 +182,9 @@ footer { display: none !important; }
     border-radius: 12px !important;
     padding: 18px !important;
     min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
     box-shadow: 0 4px 22px rgba(0, 0, 0, 0.22);
 }
 #col-center { border-color: rgba(59, 130, 246, 0.38) !important; }
@@ -189,8 +192,8 @@ footer { display: none !important; }
 #col-left h3, #col-center h3, #col-right h3 {
     font-size: 1rem !important;
     color: var(--text) !important;
-    margin: 0 0 12px !important;
-    padding-bottom: 10px !important;
+    margin: 0 0 8px !important;
+    padding-bottom: 8px !important;
     border-bottom: 1px solid var(--border-soft) !important;
 }
 
@@ -214,7 +217,7 @@ footer { display: none !important; }
     background: var(--bg-control) !important;
     border: 1px solid var(--border-control) !important;
     border-radius: 8px !important;
-    padding: 8px 10px !important;
+    padding: 11px 12px !important;
     cursor: pointer !important;
     transition: background 0.2s ease, border-color 0.2s ease !important;
 }
@@ -225,7 +228,7 @@ footer { display: none !important; }
     border-color: var(--accent) !important;
 }
 #seed-radio input[type="radio"] { display: none !important; }
-#seed-radio label span { color: var(--text) !important; font-weight: 600 !important; font-size: 0.82rem !important; }
+#seed-radio label span { color: var(--text) !important; font-weight: 600 !important; font-size: 0.9rem !important; }
 
 /* 示例风格：2 列网格 */
 #style-radio .wrap {
@@ -238,7 +241,7 @@ footer { display: none !important; }
     background: var(--bg-control) !important;
     border: 1px solid var(--border-control) !important;
     border-radius: 8px !important;
-    padding: 8px 10px !important;
+    padding: 11px 12px !important;
     cursor: pointer !important;
     text-align: center !important;
     transition: background 0.2s ease, border-color 0.2s ease !important;
@@ -250,7 +253,7 @@ footer { display: none !important; }
     border-color: var(--accent) !important;
 }
 #style-radio input[type="radio"] { display: none !important; }
-#style-radio label span { font-size: 0.8rem !important; color: var(--text) !important; font-weight: 500 !important; }
+#style-radio label span { font-size: 0.88rem !important; color: var(--text) !important; font-weight: 500 !important; }
 
 /* 背景描述 textarea 固定高度 */
 #prompt-text textarea {
@@ -259,6 +262,14 @@ footer { display: none !important; }
     max-height: 340px !important;
     resize: vertical !important;
 }
+
+/* 放大输入控件 */
+#sample-prompt input,
+#seed-input textarea, #seed-input input,
+#seed-display textarea, #seed-display input {
+    font-size: 0.95rem !important;
+}
+#seed-input textarea, #seed-display textarea { min-height: 44px !important; }
 
 /* 状态区 */
 #status-md { min-height: 24px !important; margin: 8px 0 !important; }
@@ -353,7 +364,7 @@ with gr.Blocks(title="可控智能电商背景生成系统") as demo:
                 label="上传商品图",
                 type="pil",
                 sources=["upload"],
-                height=230,
+                height=300,
             )
             seed_mode = gr.Radio(
                 choices=["随机 Seed", "固定 Seed"],
@@ -426,14 +437,14 @@ with gr.Blocks(title="可控智能电商背景生成系统") as demo:
             )
 
     sample_prompt.change(
-        fn=fill_prompt,
+        fn=on_sample_prompt,
         inputs=sample_prompt,
-        outputs=prompt_text,
+        outputs=[prompt_text, style_radio],
     )
     style_radio.change(
-        fn=fill_style_prompt,
+        fn=on_style_prompt,
         inputs=style_radio,
-        outputs=prompt_text,
+        outputs=[prompt_text, sample_prompt],
     )
     clear_btn.click(
         fn=lambda: "",
