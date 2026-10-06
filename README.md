@@ -133,21 +133,23 @@ http://127.0.0.1:7861
 
 | 项目 | 版本 / 环境 |
 | --- | --- |
-| ComfyUI | `0.38.0` |
+| ComfyUI | `0.38.2 + 35 commits (ae913fd)` |
 | ComfyUI 前端 | `1.53.10` |
 | Workflow Templates | `0.11.76` |
 | Python | `3.13.12` |
 | PyTorch | `2.12.1+cu130` |
-| 操作系统 | Windows（win32） |
+| 操作系统 | Windows11 x64 |
 | 实测 GPU | NVIDIA GeForce RTX 4070 Laptop GPU（8 GB） |
 | 运行方式 | ComfyUI Desktop（本地版） |
 
-> 最低要求建议：使用包含下列内置节点与工作流模板的 ComfyUI 版本（0.38.0 已验证）。
+> 最低要求建议：使用包含下列内置节点与工作流模板的 ComfyUI 版本（0.38.2 已验证）。
 > 其他 NVIDIA GPU 也可运行，需保证显存足够加载 Z-Image-Turbo + Qwen3 文本编码器 + ControlNet。
 
 ### 2. 自定义节点
 
-本工作流使用的全部节点都是 **ComfyUI 内置核心节点**，**无需额外安装第三方自定义节点**。
+本工作流使用的核心节点都是 **ComfyUI 内置核心节点**，**无需额外安装第三方自定义节点**。
+
+仅实验时，ComfyUI原始工作流引入了Deno Custom Nodes （版本0.7.109）进行图像对比，该节点在Web端实际应用过程中不使用。
 
 关键内置节点及其来源模块：
 
@@ -230,3 +232,5 @@ BiRefNet 部分在最终工作流中被保存为一个内置子图（Subgraph）
 - 使用 `BiRefNet` 提取商品 Mask。
 - 不使用 Upscale、不使用 Hard Composite。
 - 不重新引入旧版 ControlNet，不改成 Qwen Image Edit 或 SD1.5。
+
+2026.10.06
