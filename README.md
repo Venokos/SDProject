@@ -7,6 +7,10 @@
 > 最终 Web/UI 入口：`ui/app_final.py`
 
 ---
+## 效果展示
+![最终Web UI展示图](https://img.remit.ee/i/3u54AWmHPyMb)
+
+---
 
 ## 一、项目结构
 
